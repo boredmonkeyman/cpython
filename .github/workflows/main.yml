@@ -10,22 +10,22 @@ on:
       package_name:
         description: 'Package Name'
         required: true
-        default: 'Cpython'
+        default: 'Cpython_xbox'
 
 jobs:
   build:
     runs-on: windows-2022
 
     env:
-      SolutionPath: "cpython/UWP/UWPApp.sln"
+      SolutionPath: "UWP/UWPApp.sln"
       Platform: x64
-      Configuration: Debug
+      Configuration: Release
       BuildMode: SideLoadOnly
       AppxBundle: Never
-      ProjectPath: "cpython/UWP/python34app/python34app.vcxproj"
-      ProjectDirectory: "cpython/UWP/python34app"
-      PackageOutputRootDir: "D:\\a\\AppPackages"
-      PackageOutputDir: "D:\\a\\XboxCpython"
+      ProjectPath: "UWP/python34app/python34app.vcxproj"
+      ProjectDirectory: "UWP/python34app"
+      PackageOutputRootDir: "D:\\a\\cpython\\cpython"
+      PackageOutputDir: "D:\\a\\cpython\\cpython\\UWP"
 
     steps:
       - name: Checkout Repository
@@ -73,7 +73,7 @@ jobs:
           $PackagePath = "${env:PackageOutputRootDir}"
           if (Test-Path $PackagePath) {
             Write-Host "Creating archive for: $PackagePath"
-            Compress-Archive -Path "$PackagePath\*" -DestinationPath "${env:PackageOutputRootDir}\Pacman_Archive.zip"
+            Compress-Archive -Path "$PackagePath\*" -DestinationPath "${env:PackageOutputRootDir}\cpy_Archive.zip"
             Write-Host "Contents of package output directory after archiving:"
             Get-ChildItem -Path "${env:PackageOutputRootDir}" -Recurse
           } else {
@@ -91,7 +91,7 @@ jobs:
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: IPy_Archive
-          path: D:\a\AppPackages\cpy_Archive.zip
+          name: cpy_Archive
+          path: D:\\a\\cpython\\cpython\\UWP\\cpy_Archive.zip
 
           
