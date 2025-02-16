@@ -25,30 +25,36 @@ jobs:
       ProjectPath: "UWP/python34app/python34app.vcxproj"
       ProjectDirectory: "UWP/python34app"
       PackageOutputRootDir: "D:\\a\\cpython\\cpython\\UWP"
-      PackageOutputDir: "D:\\a\\cpython\\cpython\\UWP"
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
-        
+
       - name: Generate Self-Signed Certificate
         id: generate_cert
         run: |
-          $cert = New-SelfSignedCertificate -CertStoreLocation "Cert:\CurrentUser\My" -Subject "CN=MyUWPCert" -KeyAlgorithm RSA -KeyLength 2048 -Provider "Microsoft Enhanced RSA and AES Cryptographic Provider" -KeyExportPolicy Exportable -NotAfter (Get-Date).AddYears(1) -Type CodeSigningCert
-          echo "THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
+          try {
+            $cert = New-SelfSignedCertificate -CertStoreLocation "Cert:\CurrentUser\My" -Subject "CN=MyUWPCert" -KeyAlgorithm RSA -KeyLength 2048 -Provider "Microsoft Enhanced RSA and AES Cryptographic Provider" -KeyExportPolicy Exportable -NotAfter (Get-Date).AddYears(1) -Type CodeSigningCert
+            echo "THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
+            Write-Host "Certificate generated successfully with thumbprint: $($cert.Thumbprint)"
+          } catch {
+            Write-Host "Failed to generate certificate: $_"
+            exit 1
+          }
         shell: pwsh
 
       - name: Set Package Name
         id: set_package_name
         run: |
           echo "PACKAGE_NAME=${{ github.event.inputs.package_name }}_${{ github.event.inputs.tag_name }}" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+          Write-Host "Package name set to: ${{ github.event.inputs.package_name }}_${{ github.event.inputs.tag_name }}"
 
-      - name: App Build
+      - name: Build Application
         run: |
           msbuild /restore `
             "$env:SolutionPath" `
@@ -60,12 +66,6 @@ jobs:
             /p:AppxPackageTestDir="${env:PackageOutputRootDir}\${{ env.PACKAGE_NAME }}" `
             /p:RestorePackagesConfig=true `
             /p:AppxPackageSigningEnabled=true
-        shell: pwsh    
-
-      - name: List Output Directory
-        run: |
-          Write-Host "Listing contents of output directory:"
-          Get-ChildItem -Path "${env:PackageOutputRootDir}" -Recurse -Force
         shell: pwsh
 
       - name: Create Archive
@@ -74,24 +74,15 @@ jobs:
           if (Test-Path $PackagePath) {
             Write-Host "Creating archive for: $PackagePath"
             Compress-Archive -Path "$PackagePath\*" -DestinationPath "${env:PackageOutputRootDir}\cpy_Archive.zip"
-            Write-Host "Contents of package output directory after archiving:"
-            Get-ChildItem -Path "${env:PackageOutputRootDir}" -Recurse
+            Write-Host "Archive created successfully at ${env:PackageOutputRootDir}\cpy_Archive.zip"
           } else {
             Write-Host "Package path does not exist for archiving: $PackagePath"
             exit 1
           }
         shell: pwsh
 
-      - name: List Directory Contents
-        run: |
-          Write-Host "Listing contents of ${env:PackageOutputRootDir}:"
-          Get-ChildItem -Path "${env:PackageOutputRootDir}" -Recurse -Force
-        shell: pwsh
-
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cpy_Archive
           path: D:\\a\\cpython\\cpython\\UWP\\cpy_Archive.zip
-
-          
