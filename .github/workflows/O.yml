@@ -22,15 +22,26 @@ jobs:
       Configuration: Release
       BuildMode: SideLoadOnly
       AppxBundle: Never
-      ProjectPath: "UWP/python34a/python34.vcxproj"
+      ProjectPath: "UWP/python34app/python34app.vcxproj"
       ProjectDirectory: "UWP/python34app"
       PackageOutputRootDir: "D:\\a\\cpython\\cpython\\UWP"
+      SDL2Dir: "D:\\a\\cpython\\cpython\\UWP\\Libraries\\SDL2"
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Clone SDL2 Repository
+        run: |
+          Write-Host "Cloning SDL2 repository..."
+          if (-Not (Test-Path -Path "$env:SDL2Dir")) {
+            New-Item -ItemType Directory -Path "$env:SDL2Dir" | Out-Null
+          }
+          git clone https://github.com/libsdl-org/SDL.git "$env:SDL2Dir"
+          Write-Host "SDL2 repository cloned successfully."
+        shell: pwsh
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1
@@ -65,7 +76,8 @@ jobs:
             /p:PackageCertificateThumbprint="${{ env.THUMBPRINT }}" `
             /p:AppxPackageTestDir="${env:PackageOutputRootDir}\${{ env.PACKAGE_NAME }}" `
             /p:RestorePackagesConfig=true `
-            /p:AppxPackageSigningEnabled=true
+            /p:AppxPackageSigningEnabled=true `
+            /p:AdditionalIncludeDirectories="$env:SDL2Dir\include"
         shell: pwsh
 
       - name: Create Archive
