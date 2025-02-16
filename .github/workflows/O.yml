@@ -22,7 +22,7 @@ jobs:
       Configuration: Release
       BuildMode: SideLoadOnly
       AppxBundle: Never
-      ProjectPath: "UWP/python34app/python34app.vcxproj"
+      ProjectPath: "UWP/python34a/python34.vcxproj"
       ProjectDirectory: "UWP/python34app"
       PackageOutputRootDir: "D:\\a\\cpython\\cpython\\UWP"
 
